@@ -14,6 +14,7 @@ public class Point {
     private double y;
     private String name;
     private Integer shipType;
-    private String destination;
+    private double destinationX;
+    private double destinationY;
 
 }
