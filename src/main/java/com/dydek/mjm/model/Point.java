@@ -1,0 +1,19 @@
+package com.dydek.mjm.model;
+
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+public class Point {
+
+    private double x;
+    private double y;
+    private String name;
+    private Integer shipType;
+    private String destination;
+
+}
