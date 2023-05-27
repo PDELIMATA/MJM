@@ -1,6 +1,11 @@
-package com.dydek.mjm.model;
+package com.dydek.mjm.Service;
 
+import com.dydek.mjm.Service.ApiService.ApiService;
+import com.dydek.mjm.model.Datum;
+import com.dydek.mjm.model.Point;
+import com.dydek.mjm.model.Track;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -17,10 +22,17 @@ import java.util.Optional;
 public class TrackService {
     RestTemplate restTemplate = new RestTemplate();
 
+    private final ApiService apiService;
+
+    @Autowired
+    public TrackService(ApiService apiService) {
+        this.apiService = apiService;
+    }
+
     public List<Point> getTracks() {
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        String token = "token";
+        String token = apiService.getAuthToken();
         httpHeaders.add("Authorization", "Bearer " + token);
         HttpEntity<Void> httpEntity = new HttpEntity<>(httpHeaders);
         ResponseEntity<Track[]> exchange = restTemplate.exchange(
@@ -30,10 +42,8 @@ public class TrackService {
                 Track[].class
         );
 
-        //TODO: fix filtering for area instead of ShipType and Name
+        //TODO: fix filtering for area
         Track[] tracks = Arrays.stream(Objects.requireNonNull(exchange.getBody()))
-                .filter(track -> track.getShipType() == 30)
-                .filter(track -> track.getName() != null && track.getName().startsWith("H"))
                 .map(track -> {
                     if (track.getName() == null) {
                         track.setName("UNKNOWN");
@@ -43,6 +53,7 @@ public class TrackService {
                     }
                     return track;
                 })
+                .limit(50)
                 .toArray(Track[]::new);
 
         return Arrays.stream(tracks)
@@ -67,7 +78,7 @@ public class TrackService {
 
     public Datum getDestination(String destinationName, double Lat, double Long) {
         try {
-            String url = "<positionstockapi>" + destinationName;
+            String url = "http://api.positionstack.com/v1/forward?access_key=ecc21c99187c197c45144b0a89cd6648&query=" + destinationName;
             JsonNode data = Objects.requireNonNull(restTemplate.getForObject(url, JsonNode.class)).get("data").get(0);
             double latitude = Optional.of(data.get("latitude").asDouble()).orElse(Lat);
             double longitude = Optional.of(data.get("longitude").asDouble()).orElse(Long);

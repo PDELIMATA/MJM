@@ -1,6 +1,6 @@
-package com.dydek.mjm;
+package com.dydek.mjm.Controller;
 
-import com.dydek.mjm.model.TrackService;
+import com.dydek.mjm.Service.TrackService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
