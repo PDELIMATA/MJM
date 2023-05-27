@@ -1,9 +1,9 @@
 package com.dydek.mjm.Service;
 
 import com.dydek.mjm.Service.ApiService.ApiService;
-import com.dydek.mjm.model.Datum;
-import com.dydek.mjm.model.Point;
-import com.dydek.mjm.model.Track;
+import com.dydek.mjm.Model.Datum;
+import com.dydek.mjm.Model.Point;
+import com.dydek.mjm.Model.Track;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -32,7 +32,7 @@ public class TrackService {
     public List<Point> getTracks() {
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        String token = apiService.getAuthToken();
+        String token = apiService.getToken();
         httpHeaders.add("Authorization", "Bearer " + token);
         HttpEntity<Void> httpEntity = new HttpEntity<>(httpHeaders);
         ResponseEntity<Track[]> exchange = restTemplate.exchange(

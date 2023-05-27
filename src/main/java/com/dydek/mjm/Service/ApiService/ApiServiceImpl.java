@@ -21,11 +21,11 @@ public class ApiServiceImpl implements ApiService{
     private final AtomicReference<String> apiClientId = new AtomicReference<>("delimata.ps@gmail.com:dydek");
 
     public ApiServiceImpl() {
-        this.getAuthToken();
+        this.generateAuthToken();
     }
 
     @Scheduled(initialDelay = 3_000_000, fixedDelay = 3_000_000)
-    public String getAuthToken() {
+    public void generateAuthToken() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -49,7 +49,10 @@ public class ApiServiceImpl implements ApiService{
             throw new IllegalStateException();
         }
         this.accessToken.set((String) token);
-        return ((String) token).toString();
+    }
+
+    public String getToken(){
+        return this.accessToken.toString();
     }
 
 }

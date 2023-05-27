@@ -1,4 +1,4 @@
-package com.dydek.mjm.model;
+package com.dydek.mjm.Model;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
