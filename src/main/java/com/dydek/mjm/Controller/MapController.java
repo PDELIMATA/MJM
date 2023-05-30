@@ -14,7 +14,7 @@ public class MapController {
         this.trackService = trackService;
     }
 
-    @GetMapping("/")
+    @GetMapping("/map")
     public String getMap(Model model) {
         model.addAttribute("tracks", trackService.getTracks());
         return "map";
