@@ -2,7 +2,7 @@ package com.dydek.mjm.Service;
 
 import com.dydek.mjm.Service.ApiService.ApiService;
 import com.dydek.mjm.Model.Datum;
-import com.dydek.mjm.Model.Point;
+import com.dydek.mjm.Model.Ship;
 import com.dydek.mjm.Model.Track;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,23 +13,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TrackService {
     RestTemplate restTemplate = new RestTemplate();
 
     private final ApiService apiService;
+    private List<Ship> shipsOnRadar = new ArrayList<>();
 
     @Autowired
     public TrackService(ApiService apiService) {
         this.apiService = apiService;
     }
 
-    public List<Point> getTracks() {
+    public List<Ship> getTracks() {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         String token = apiService.getToken();
@@ -56,11 +54,12 @@ public class TrackService {
                 .limit(50)
                 .toArray(Track[]::new);
 
-        return Arrays.stream(tracks)
-                .map(track -> new Point(
+        return this.shipsOnRadar = Arrays.stream(tracks)
+                .map(track -> new Ship(
                         track.getLatitude(),
                         track.getLongitude(),
                         track.getName(),
+                        track.getMmsi(),
                         track.getShipType(),
                         getLat(track),
                         getLong(track)
@@ -87,6 +86,11 @@ public class TrackService {
             return new Datum(Lat, Long);
         }
     }
-
+    public Ship getShipInfo(Integer mmsi) {
+        return shipsOnRadar.stream()
+                .filter(s -> s.getMmsi().equals(mmsi))
+                .findFirst()
+                .orElse(null);
+    }
 
 }

@@ -1,43 +1,25 @@
 package com.dydek.mjm.Model;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.annotation.Generated;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({
-        "data"
+        "destinations"
 })
-@Generated("jsonschema2pojo")
+@NoArgsConstructor
+@Data
 public class Destination {
 
-    @JsonProperty("data")
-    private List<Datum> data;
-    @JsonIgnore
-    private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
-
-    @JsonProperty("data")
-    public List<Datum> getData() {
-        return data;
-    }
-
-    @JsonProperty("data")
-    public void setData(List<Datum> data) {
-        this.data = data;
-    }
-
-    @JsonAnyGetter
-    public Map<String, Object> getAdditionalProperties() {
-        return this.additionalProperties;
-    }
-
-    @JsonAnySetter
-    public void setAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
-    }
+    private List<Datum> destinations;
+    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
 }
-

@@ -8,11 +8,12 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class Point {
+public class Ship {
 
     private double x;
     private double y;
     private String name;
+    private Integer mmsi;
     private Integer shipType;
     private double destinationX;
     private double destinationY;

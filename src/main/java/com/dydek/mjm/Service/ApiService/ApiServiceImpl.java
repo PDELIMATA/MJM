@@ -1,9 +1,6 @@
 package com.dydek.mjm.Service.ApiService;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -11,49 +8,56 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
-public class ApiServiceImpl implements ApiService{
-    private final RestTemplate template = new RestTemplate();
-    private final AtomicReference<String> accessToken = new AtomicReference<>();
-    private final AtomicReference<String> apiSecret = new AtomicReference<>("Abcdef12345!");
-    private final AtomicReference<String> apiClientId = new AtomicReference<>("delimata.ps@gmail.com:dydek");
+public class ApiServiceImpl implements ApiService {
+    private final RestTemplate restTemplate = new RestTemplate();
+    private volatile String accessToken;
 
     public ApiServiceImpl() {
-        this.generateAuthToken();
+        generateAuthToken();
     }
 
     @Scheduled(initialDelay = 3_000_000, fixedDelay = 3_000_000)
     public void generateAuthToken() {
+        try {
+            this.accessToken = requestAuthToken();
+        } catch (Exception ex) {
+
+        }
+    }
+
+    private String requestAuthToken() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("client_id", apiClientId.get());
+        String apiClientId = "delimata.ps@gmail.com:dydek";
+        body.add("client_id", apiClientId);
         body.add("scope", "ais");
-        body.add("client_secret", this.apiSecret.get());
+        String apiSecret = "Abcdef12345!";
+        body.add("client_secret", apiSecret);
         body.add("grant_type", "client_credentials");
 
-        HttpEntity entity = new HttpEntity(body, headers);
-        var response = template.exchange("https://id.barentswatch.no/connect/token",
+        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "https://id.barentswatch.no/connect/token",
                 HttpMethod.POST,
                 entity,
-                Map.class);
-        var responseBody = response.getBody();
+                Map.class
+        );
+        Map responseBody = response.getBody();
         if (responseBody == null) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Empty response body");
         }
-        var token = responseBody.get("access_token");
+        Object token = responseBody.get("access_token");
         if (token == null) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Access token not found");
         }
-        this.accessToken.set((String) token);
+        return (String) token;
     }
 
-    public String getToken(){
-        return this.accessToken.toString();
+    public String getToken() {
+        return accessToken;
     }
-
 }
-
