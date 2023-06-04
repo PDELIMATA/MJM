@@ -67,6 +67,13 @@ public class TrackService {
                 .toList();
     }
 
+    public Ship getShip(Integer mmsi) {
+        return getTracks().stream()
+                .filter(s -> s.getMmsi().equals(mmsi))
+                .findFirst()
+                .orElse(null);
+    }
+
     private double getLat(Track track) {
         return getDestination(track.getDestination(), track.getLatitude(), track.getLongitude()).getLatitude();
     }

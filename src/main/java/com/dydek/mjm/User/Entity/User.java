@@ -1,14 +1,17 @@
 package com.dydek.mjm.User.Entity;
 
+import com.dydek.mjm.FollowedShips.Entity.Ship;
 import com.dydek.mjm.User.Role;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -17,11 +20,13 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
     private Long id;
-    @Column(name = "username", nullable = false, unique = true)
+    @NotNull
     private String username;
     private String password;
 
     private String role;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = Ship.class)
+    private List<Ship> ships;
 
 
     public User(String username, String password, String role) {
