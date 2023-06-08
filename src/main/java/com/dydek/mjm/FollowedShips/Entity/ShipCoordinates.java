@@ -13,7 +13,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class ShipCoordinates {
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private Date date;
@@ -23,8 +23,14 @@ public class ShipCoordinates {
     private Double positionLat;
 
     @ManyToOne(targetEntity = Ship.class)
-    @JoinColumn(name = "ship")
+    @JoinColumn(name = "ship_id")
     private Ship ship;
 
 
+    public ShipCoordinates(Date date, Double positionLong, Double positionLat, Ship ship) {
+        this.date = date;
+        this.positionLong = positionLong;
+        this.positionLat = positionLat;
+        this.ship = ship;
+    }
 }

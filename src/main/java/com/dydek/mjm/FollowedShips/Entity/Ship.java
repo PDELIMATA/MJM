@@ -9,18 +9,19 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
+@Table(name = "ship")
 @Getter
 @Setter
 @NoArgsConstructor
 public class Ship {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private Integer mmsi;
 
-    private String shipType;
+    private Integer shipType;
 
     private String name;
 
@@ -28,10 +29,10 @@ public class Ship {
     private List<Ship> coordinates;
 
     @ManyToOne(fetch = FetchType.EAGER, targetEntity = User.class)
-    @JoinColumn(name = "user")
+    @JoinColumn(name = "user_id")
     private User user;
 
-    public Ship(Integer mmsi, String shipType, String name, User user) {
+    public Ship(Integer mmsi, Integer shipType, String name, User user) {
         this.mmsi = mmsi;
         this.shipType = shipType;
         this.name = name;

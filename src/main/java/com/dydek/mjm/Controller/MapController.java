@@ -1,6 +1,6 @@
 package com.dydek.mjm.Controller;
 
-import com.dydek.mjm.Service.TrackService;
+import com.dydek.mjm.Service.TrackServiceImpl;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class MapController {
 
-    private final TrackService trackService;
+    private final TrackServiceImpl trackService;
 
-    public MapController(TrackService trackService) {
+    public MapController(TrackServiceImpl trackService) {
         this.trackService = trackService;
     }
 
