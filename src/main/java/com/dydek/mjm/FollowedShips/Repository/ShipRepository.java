@@ -9,5 +9,5 @@ import java.util.List;
 public interface ShipRepository extends JpaRepository<Ship, Long> {
     List<Ship> findShipsByUser(User user);
 
-    Boolean existsByUserAndMmsi(User user, Integer mmsi);
+    Ship findShipByUserAndMmsi(User user, Integer mmsi);
 }

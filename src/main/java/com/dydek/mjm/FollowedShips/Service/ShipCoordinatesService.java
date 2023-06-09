@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface ShipCoordinatesService {
     List<ShipCoordinatesDTO> getShipsCoordinates(Long id);
-    void updateShipLocations(String username);
+    void updateShipLocations();
 }

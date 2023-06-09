@@ -13,10 +13,14 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AuthorizationServiceException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.naming.NameNotFoundException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ShipServiceImpl implements ShipService {
@@ -34,9 +38,14 @@ public class ShipServiceImpl implements ShipService {
         this.trackService = trackService;
     }
 
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    UserDetails userDetail = (UserDetails) auth.getPrincipal();
+
     @Override
-    public List<ShipDTO> getUsersShips(String username) {
-        return shipRepository.findShipsByUser(userRepository.findByUsername(username).orElse(new User())).stream().map(ship -> modelMapper.map(ship, ShipDTO.class)).toList();
+    public List<ShipDTO> getUsersShips() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetail = (UserDetails) auth.getPrincipal();
+        return shipRepository.findShipsByUser(userRepository.findByUsername(userDetail.getUsername()).orElse(new User())).stream().map(ship -> modelMapper.map(ship, ShipDTO.class)).toList();
     }
 
     @Override
@@ -44,40 +53,42 @@ public class ShipServiceImpl implements ShipService {
         return modelMapper.map(shipRepository.findById(id), ShipDTO.class);
     }
 
-
     @Override
     @Transactional
-    public void addShipToTrackingSystem(String username, Integer mmsi) throws NameNotFoundException {
-        var userEntity = userRepository.findByUsername(username)
+    public void addShipToTrackingSystem(Integer mmsi) throws NameNotFoundException, EntityExistsException {
+        var userEntity = userRepository.findByUsername(userDetail.getUsername())
                 .orElseThrow(EntityNotFoundException::new);
 
-        if (shipRepository.existsByUserAndMmsi(userRepository.findByUsername(username).get(), mmsi)) {
-            throw new EntityExistsException();
-        }
+        Ship existingShip = shipRepository.findShipByUserAndMmsi(userEntity, mmsi);
+
+        Optional.ofNullable(existingShip)
+                .ifPresent(ship -> {
+                    throw new EntityExistsException();
+                });
 
         com.dydek.mjm.Model.Ship serviceShip = trackService.getShip(mmsi);
 
-        if (serviceShip == null) {
-            throw new NameNotFoundException("There is no serviceShip with this MMSI");
-        } else {
-            Ship ship = new Ship(mmsi, serviceShip.getShipType(), serviceShip.getName(), userEntity);
-            shipRepository.save(ship);
+        Optional.ofNullable(serviceShip)
+                .orElseThrow(() -> new NameNotFoundException("There is no serviceShip with this MMSI"));
 
-            ShipCoordinates shipCoordinates = new ShipCoordinates(
-                    serviceShip.getDate(),
-                    serviceShip.getX(),
-                    serviceShip.getY(),
-                    ship);
+        Ship ship = new Ship(mmsi, serviceShip.getShipType(), serviceShip.getName(), userEntity);
+        shipRepository.save(ship);
 
-            shipCoordinatesRepository.save(shipCoordinates);
-        }
+        ShipCoordinates shipCoordinates = new ShipCoordinates(
+                serviceShip.getDate(),
+                serviceShip.getX(),
+                serviceShip.getY(),
+                ship);
+
+        shipCoordinatesRepository.save(shipCoordinates);
     }
+
 
     @Override
     @Transactional
-    public void removeShipFromTrackingSystem(String username, Long shipId) {
+    public void removeShipFromTrackingSystem(Long shipId) {
         var ship = shipRepository.findById(shipId).orElseThrow();
-        if (!ship.getUser().getUsername().equals(username)) {
+        if (!ship.getUser().getUsername().equals(userDetail.getUsername())) {
             throw new AuthorizationServiceException("");
         }
         shipRepository.delete(ship);

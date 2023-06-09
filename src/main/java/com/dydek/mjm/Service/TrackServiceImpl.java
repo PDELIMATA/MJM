@@ -86,7 +86,7 @@ public class TrackServiceImpl implements TrackService {
     @Scheduled(initialDelay = 100, fixedDelay = 60_000)
     public void fetchCurrentShips() {
         this.shipsOnRadar = getTracks();
-        this.shipCoordinatesService.updateShipLocations("abcd");
+        this.shipCoordinatesService.updateShipLocations();
     }
     @Override
     public double getLat(Track track) {
