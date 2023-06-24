@@ -12,5 +12,6 @@ public class ShipDTO {
     private Integer mmsi;
     private String shipType;
     private String name;
+    private boolean aaddedToTrackingSystem;
 
 }

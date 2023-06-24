@@ -31,11 +31,13 @@ public class Ship {
     @ManyToOne(fetch = FetchType.EAGER, targetEntity = User.class)
     @JoinColumn(name = "user_id")
     private User user;
+    private boolean addedToTrackingSystem;
 
-    public Ship(Integer mmsi, Integer shipType, String name, User user) {
+    public Ship(Integer mmsi, Integer shipType, String name, User user, boolean addedToTrackingSystem) {
         this.mmsi = mmsi;
         this.shipType = shipType;
         this.name = name;
         this.user = user;
+        this.addedToTrackingSystem = addedToTrackingSystem;
     }
 }

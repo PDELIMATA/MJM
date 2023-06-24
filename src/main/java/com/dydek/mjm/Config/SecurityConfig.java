@@ -18,13 +18,13 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/sign-in", "/logout", "/").permitAll()
-                        .requestMatchers("/map").authenticated())
+                        .requestMatchers("/login", "/logout", "/").permitAll()
+                        .anyRequest().authenticated())
                 .formLogin(form ->
                         form
-                                .loginPage("/sign-in")
+                                .loginPage("/login")
                                 .loginProcessingUrl("/perform-login")
-                                .defaultSuccessUrl("/map")
+                                .defaultSuccessUrl("/all")
                                 .failureUrl("/sign-in?error=true"))
                 .logout(out ->
                         out

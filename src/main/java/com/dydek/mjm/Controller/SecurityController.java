@@ -6,13 +6,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class SecurityController {
 
-    @GetMapping("/sign-in")
+    @GetMapping("/login")
     public String signIn() {
-        return "sign-in";
+        return "login";
     }
 
     @GetMapping("/")
     public String getMainPage() {
-        return "sign-in";
+        return "login";
     }
 }

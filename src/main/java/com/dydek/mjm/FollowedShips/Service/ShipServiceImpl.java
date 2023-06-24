@@ -1,6 +1,7 @@
 package com.dydek.mjm.FollowedShips.Service;
 
 import com.dydek.mjm.FollowedShips.DTO.ShipDTO;
+import com.dydek.mjm.FollowedShips.DTO.ShipWithRouteDTO;
 import com.dydek.mjm.FollowedShips.Entity.Ship;
 import com.dydek.mjm.FollowedShips.Entity.ShipCoordinates;
 import com.dydek.mjm.FollowedShips.Repository.ShipCoordinatesRepository;
@@ -13,12 +14,10 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AuthorizationServiceException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.naming.NameNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,22 +29,36 @@ public class ShipServiceImpl implements ShipService {
     private final ModelMapper modelMapper;
     private final TrackService trackService;
 
-    public ShipServiceImpl(UserRepository userRepository, ShipRepository shipRepository, ShipCoordinatesRepository shipCoordinatesRepository, ModelMapper modelMapper, TrackService trackService) {
+    private final ShipCoordinatesService shipCoordinatesService;
+
+    public ShipServiceImpl(UserRepository userRepository, ShipRepository shipRepository, ShipCoordinatesRepository shipCoordinatesRepository, ModelMapper modelMapper, TrackService trackService, ShipCoordinatesService shipCoordinatesService) {
         this.userRepository = userRepository;
         this.shipRepository = shipRepository;
         this.shipCoordinatesRepository = shipCoordinatesRepository;
         this.modelMapper = modelMapper;
         this.trackService = trackService;
+        this.shipCoordinatesService = shipCoordinatesService;
     }
 
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    UserDetails userDetail = (UserDetails) auth.getPrincipal();
+    @Override
+    public List<Ship> getUsersShips(String username) {
+        return shipRepository.findShipsByUser(userRepository.findByUsername(username).orElse(new User())).stream().toList();
+    }
 
     @Override
-    public List<ShipDTO> getUsersShips() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetail = (UserDetails) auth.getPrincipal();
-        return shipRepository.findShipsByUser(userRepository.findByUsername(userDetail.getUsername()).orElse(new User())).stream().map(ship -> modelMapper.map(ship, ShipDTO.class)).toList();
+    public List<ShipWithRouteDTO> getUserShipsWithRoutes(String username) {
+        List<ShipWithRouteDTO> userShipsWithRout = new ArrayList<>();
+        getUsersShips(username).forEach(ship -> {
+            var userShip = this.getShip(ship.getId());
+            var route = shipCoordinatesService.getShipsCoordinates(ship.getId());
+            userShipsWithRout.add(new ShipWithRouteDTO(userShip, route));
+        });
+        return userShipsWithRout;
+    }
+
+    @Override
+    public List<ShipDTO> getMmsiShipAddedToTS(String username) {
+        return getUsersShips(username).stream().map(ship -> modelMapper.map(ship, ShipDTO.class)).toList();
     }
 
     @Override
@@ -55,8 +68,9 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     @Transactional
-    public void addShipToTrackingSystem(Integer mmsi) throws NameNotFoundException, EntityExistsException {
-        var userEntity = userRepository.findByUsername(userDetail.getUsername())
+    public void addShipToTrackingSystem(String username, Integer mmsi) throws NameNotFoundException, EntityExistsException {
+
+        var userEntity = userRepository.findByUsername(username)
                 .orElseThrow(EntityNotFoundException::new);
 
         Ship existingShip = shipRepository.findShipByUserAndMmsi(userEntity, mmsi);
@@ -69,9 +83,9 @@ public class ShipServiceImpl implements ShipService {
         com.dydek.mjm.Model.Ship serviceShip = trackService.getShip(mmsi);
 
         Optional.ofNullable(serviceShip)
-                .orElseThrow(() -> new NameNotFoundException("There is no serviceShip with this MMSI"));
+                .orElseThrow(() -> new NameNotFoundException("There is no Ship with this MMSI"));
 
-        Ship ship = new Ship(mmsi, serviceShip.getShipType(), serviceShip.getName(), userEntity);
+        Ship ship = new Ship(mmsi, serviceShip.getShipType(), serviceShip.getName(), userEntity, true);
         shipRepository.save(ship);
 
         ShipCoordinates shipCoordinates = new ShipCoordinates(
@@ -83,12 +97,11 @@ public class ShipServiceImpl implements ShipService {
         shipCoordinatesRepository.save(shipCoordinates);
     }
 
-
     @Override
     @Transactional
-    public void removeShipFromTrackingSystem(Long shipId) {
+    public void removeShipFromTrackingSystem(String username, Long shipId) {
         var ship = shipRepository.findById(shipId).orElseThrow();
-        if (!ship.getUser().getUsername().equals(userDetail.getUsername())) {
+        if (!ship.getUser().getUsername().equals(username)) {
             throw new AuthorizationServiceException("");
         }
         shipRepository.delete(ship);

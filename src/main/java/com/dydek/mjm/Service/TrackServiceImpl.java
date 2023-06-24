@@ -83,19 +83,22 @@ public class TrackServiceImpl implements TrackService {
                 .orElse(null);
     }
 
-    @Scheduled(initialDelay = 100, fixedDelay = 60_000)
+    @Scheduled(initialDelay = 300, fixedDelay = 60_000)
     public void fetchCurrentShips() {
         this.shipsOnRadar = getTracks();
         this.shipCoordinatesService.updateShipLocations();
     }
+
     @Override
     public double getLat(Track track) {
         return getDestination(track.getDestination(), track.getLatitude(), track.getLongitude()).getLatitude();
     }
+
     @Override
     public double getLong(Track track) {
-         return getDestination(track.getDestination(), track.getLatitude(), track.getLongitude()).getLongitude();
+        return getDestination(track.getDestination(), track.getLatitude(), track.getLongitude()).getLongitude();
     }
+
     @Override
     public Datum getDestination(String destinationName, double Lat, double Long) {
         try {
@@ -108,5 +111,4 @@ public class TrackServiceImpl implements TrackService {
             return new Datum(Lat, Long);
         }
     }
-
 }

@@ -1,19 +1,18 @@
 package com.dydek.mjm.Controller;
 
-import com.dydek.mjm.FollowedShips.DTO.ShipDTO;
 import com.dydek.mjm.FollowedShips.DTO.ShipWithRouteDTO;
 import com.dydek.mjm.FollowedShips.Service.ShipCoordinatesService;
 import com.dydek.mjm.FollowedShips.Service.ShipService;
-import com.dydek.mjm.Model.Ship;
 import com.dydek.mjm.Service.TrackService;
+import com.dydek.mjm.User.Entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.naming.NameNotFoundException;
-import java.util.List;
 
 @Controller
-@RequestMapping("/ships")
 public class MapController {
 
     private final TrackService trackService;
@@ -26,30 +25,36 @@ public class MapController {
         this.shipCoordinatesService = shipCoordinatesService;
     }
 
-    @GetMapping("/")
-    List<Ship> getAllShips() {
-        return trackService.getAllShips();
+    @GetMapping("/all")
+    String getAllShips(Model model, @AuthenticationPrincipal User authenticationUser) {
+        model.addAttribute("tracks", trackService.getAllShips());
+        model.addAttribute("userShips", shipService.getMmsiShipAddedToTS(authenticationUser.getUsername()));
+        return "map";
     }
 
     @GetMapping("route/{shipId}")
-    ShipWithRouteDTO getShipRoute(Long shipId){
+    String getShipRoute(Model model, Long shipId) {
         var ship = shipService.getShip(shipId);
         var route = shipCoordinatesService.getShipsCoordinates(shipId);
-        return new ShipWithRouteDTO(ship, route);
+        model.addAttribute("shipRoute", new ShipWithRouteDTO(ship, route));
+        return "ships/route";
     }
 
     @GetMapping("monitored-ships")
-    List<ShipDTO> getTrackedShips(){
-        return shipService.getUsersShips();
+    String getTrackedShips(Model model, @AuthenticationPrincipal User authenticationUser) {
+        model.addAttribute("shipsWithRoutes", shipService.getUserShipsWithRoutes(authenticationUser.getUsername()));
+        return "ships/routes";
     }
 
     @PostMapping("monitored-ships/{shipMMSI}")
-    void addShipToTrackingSystem(@PathVariable Integer shipMMSI) throws NameNotFoundException {
-        shipService.addShipToTrackingSystem(shipMMSI);
+    String addShipToTrackingSystem(@PathVariable Integer shipMMSI, @AuthenticationPrincipal User authenticationUser) throws NameNotFoundException {
+        shipService.addShipToTrackingSystem(authenticationUser.getUsername(), shipMMSI);
+        return "redirect:/all";
     }
 
-    @DeleteMapping("monitored-ships/{shipId}")
-    void removeShipFromTrackingSystem(@PathVariable Long shipId){
-        shipService.removeShipFromTrackingSystem(shipId);
+    @RequestMapping(value = "monitored-ships/{shipId}", method = RequestMethod.GET)
+    String removeShipFromTrackingSystem(@PathVariable Long shipId, @AuthenticationPrincipal User authenticationUser) {
+        shipService.removeShipFromTrackingSystem(authenticationUser.getUsername(), shipId);
+        return "redirect:/all";
     }
 }
