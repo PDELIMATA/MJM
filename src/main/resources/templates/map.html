@@ -42,7 +42,7 @@
             '<button type="submit" class="add-remove-button">Route</button>' +
             "</form>" : "";
         var shipDetails = isShipInUserShips(value) ?
-            '<button th:href="@{/monitored-ships/ship/' + getId(value) + '}">Details</button>' : "";
+            '<button onclick="redirectToShipDetails(' + getId(value) + ')">Details</button>' : "";
         var marker = L.marker([value.x, value.y], {
             title: value.name + " " + value.mmsi,
         }).addTo(map);
@@ -82,6 +82,10 @@
     function getId(ship) {
         const foundUserShip = userShips.find(userShip => userShip.mmsi === ship.mmsi);
         return foundUserShip ? foundUserShip.id : ship.mmsi;
+    }
+
+    function redirectToShipDetails(shipId) {
+        window.location.href = "/monitored-ships/ship/" + shipId;
     }
 
 </script>

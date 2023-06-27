@@ -41,6 +41,8 @@
             }
         ).addTo(map);
 
+        var shipDetails = '<button onclick="redirectToShipDetails(' + shipRoute.ship.shipDTO.id + ')">Details</button>';
+
         var shipPopupContent =
             shipRoute.ship.shipDTO.name + " mmsi: " + shipRoute.ship.shipDTO.mmsi +
             "<hr>" +
@@ -51,7 +53,7 @@
             '<form action="/monitored-ships/' + shipRoute.ship.shipDTO.id + '" method="GET">' +
             '<button type="submit" class="add-remove-button">Remove</button>' +
             "</form>" +
-            "<button th:href='@{/monitored-ships/ship/'" + shipRoute.ship.shipDTO.id + "></button>";
+            shipDetails;
 
         var shipPopup = L.popup().setContent(shipPopupContent);
         shipMarker.bindPopup(shipPopup).openPopup();
@@ -60,6 +62,10 @@
 
         var routeLine = L.polyline(routeCoordinates, {color: 'red'}).addTo(map);
     });
+
+    function redirectToShipDetails(shipId) {
+        window.location.href = "/monitored-ships/ship/" + shipId;
+    }
 
 
 </script>

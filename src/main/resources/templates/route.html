@@ -40,6 +40,8 @@
         title: ship.name + " " + ship.mmsi,
     }).addTo(map);
 
+    var shipDetails = '<button onclick="redirectToShipDetails(' + ship.id+ ')">Details</button>';
+
     var shipPopupContent =
         ship.name + " mmsi: " + ship.mmsi +
         "<hr>" +
@@ -50,7 +52,7 @@
         '<form action="/monitored-ships/' + ship.id + 'method="GET">' +
         '<button type="submit" class="add-remove-button">Remove</button>' +
         "</form>" +
-        '<button th:href="@{/monitored-ships/ship/' + ship.id + '}">Details</button>'
+        shipDetails;
 
     var shipPopup = L.popup().setContent(shipPopupContent);
     shipMarker.bindPopup(shipPopup).openPopup();
@@ -62,6 +64,10 @@
     });
 
     var routeLine = L.polyline(routeCoordinates, {color: 'red'}).addTo(map);
+
+    function redirectToShipDetails(shipId) {
+        window.location.href = "/monitored-ships/ship/" + shipId;
+    }
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"

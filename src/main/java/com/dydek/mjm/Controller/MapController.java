@@ -48,6 +48,12 @@ public class MapController {
         return "all-ship-routes";
     }
 
+    @GetMapping("monitored-ships/ship/{shipId}")
+    String getTrackedShipsList(Model model, @PathVariable Long shipId, @AuthenticationPrincipal User authenticationUser) {
+        model.addAttribute("ship", shipService.getShip(shipId));
+        return "ship";
+    }
+
     @GetMapping("monitored-ships/list")
     String getTrackedShipsList(Model model, @AuthenticationPrincipal User authenticationUser) {
         model.addAttribute("ships", shipService.getUsersShips(authenticationUser.getUsername()));
