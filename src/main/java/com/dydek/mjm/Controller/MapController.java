@@ -33,17 +33,25 @@ public class MapController {
     }
 
     @GetMapping("route/{shipId}")
-    String getShipRoute(Model model, Long shipId) {
+    String getShipRoute(Model model, @PathVariable Long shipId) {
         var ship = shipService.getShip(shipId);
         var route = shipCoordinatesService.getShipsCoordinates(shipId);
+        model.addAttribute("shipCoordinates", ship.getShipCoordinatesDTO());
+        model.addAttribute("ship", ship.getShipDTO());
         model.addAttribute("shipRoute", new ShipWithRouteDTO(ship, route));
-        return "ships/route";
+        return "route";
     }
 
-    @GetMapping("monitored-ships")
-    String getTrackedShips(Model model, @AuthenticationPrincipal User authenticationUser) {
+    @GetMapping("monitored-ships/routes")
+    String getTrackedShipsRoutes(Model model, @AuthenticationPrincipal User authenticationUser) {
         model.addAttribute("shipsWithRoutes", shipService.getUserShipsWithRoutes(authenticationUser.getUsername()));
-        return "ships/routes";
+        return "all-ship-routes";
+    }
+
+    @GetMapping("monitored-ships/list")
+    String getTrackedShipsList(Model model, @AuthenticationPrincipal User authenticationUser) {
+        model.addAttribute("ships", shipService.getUsersShips(authenticationUser.getUsername()));
+        return "all-ship-list";
     }
 
     @PostMapping("monitored-ships/{shipMMSI}")

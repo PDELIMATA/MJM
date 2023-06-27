@@ -1,6 +1,7 @@
 package com.dydek.mjm.FollowedShips.Service;
 
 import com.dydek.mjm.FollowedShips.DTO.ShipDTO;
+import com.dydek.mjm.FollowedShips.DTO.ShipWithCoordinatesDTO;
 import com.dydek.mjm.FollowedShips.DTO.ShipWithRouteDTO;
 import com.dydek.mjm.FollowedShips.Entity.Ship;
 
@@ -14,7 +15,7 @@ public interface ShipService {
 
     List<ShipDTO> getMmsiShipAddedToTS(String username);
 
-    ShipDTO getShip(Long id);
+    ShipWithCoordinatesDTO getShip(Long id);
 
     void addShipToTrackingSystem(String username, Integer mmsi) throws NameNotFoundException;
 

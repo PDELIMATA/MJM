@@ -18,11 +18,8 @@ public class Ship {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
     private Integer mmsi;
-
     private Integer shipType;
-
     private String name;
 
     @OneToMany(mappedBy = "ship", cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = ShipCoordinates.class)

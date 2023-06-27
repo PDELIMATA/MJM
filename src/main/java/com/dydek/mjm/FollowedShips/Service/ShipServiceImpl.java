@@ -1,6 +1,8 @@
 package com.dydek.mjm.FollowedShips.Service;
 
+import com.dydek.mjm.FollowedShips.DTO.ShipCoordinatesDTO;
 import com.dydek.mjm.FollowedShips.DTO.ShipDTO;
+import com.dydek.mjm.FollowedShips.DTO.ShipWithCoordinatesDTO;
 import com.dydek.mjm.FollowedShips.DTO.ShipWithRouteDTO;
 import com.dydek.mjm.FollowedShips.Entity.Ship;
 import com.dydek.mjm.FollowedShips.Entity.ShipCoordinates;
@@ -62,8 +64,12 @@ public class ShipServiceImpl implements ShipService {
     }
 
     @Override
-    public ShipDTO getShip(Long id) {
-        return modelMapper.map(shipRepository.findById(id), ShipDTO.class);
+    public ShipWithCoordinatesDTO getShip(Long id) {
+
+        ShipDTO shipDTO = modelMapper.map(shipRepository.findById(id).orElse(new Ship()), ShipDTO.class);
+        ShipCoordinatesDTO shipCoordinatesDTO = modelMapper.map(shipCoordinatesRepository.findById(id).orElse(new ShipCoordinates()), ShipCoordinatesDTO.class);
+        return new ShipWithCoordinatesDTO(shipDTO, shipCoordinatesDTO);
+
     }
 
     @Override

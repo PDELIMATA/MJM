@@ -10,4 +10,6 @@ public interface ShipRepository extends JpaRepository<Ship, Long> {
     List<Ship> findShipsByUser(User user);
 
     Ship findShipByUserAndMmsi(User user, Integer mmsi);
+
+    Ship findShipsById(Long id);
 }

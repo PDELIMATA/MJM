@@ -8,6 +8,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class ShipWithRouteDTO {
-    ShipDTO ship;
+    ShipWithCoordinatesDTO ship;
     List<ShipCoordinatesDTO> route;
 }

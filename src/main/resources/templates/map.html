@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
@@ -37,8 +37,12 @@
         var polygon;
         var addButton = isShipInUserShips(value) ? "Remove" : "Add";
         var sendMethod = isShipInUserShips(value) ? "GET" : "POST";
-
-
+        var route = isShipInUserShips(value) ?
+            '<form action="/route/' + getId(value) + '" method="GET">' +
+            '<button type="submit" class="add-remove-button">Route</button>' +
+            "</form>" : "";
+        var shipDetails = isShipInUserShips(value) ?
+            '<button th:href="@{/monitored-ships/ship/' + getId(value) + '}">Details</button>' : "";
         var marker = L.marker([value.x, value.y], {
             title: value.name + " " + value.mmsi,
         }).addTo(map);
@@ -50,9 +54,11 @@
             "<br>Latitude: " + value.x +
             "<br>Longitude: " + value.y +
             "<hr>" +
-            '<form action="/monitored-ships/' + getId(value)+ '" method="' + sendMethod + '">' +
+            '<form action="/monitored-ships/' + getId(value) + '" method="' + sendMethod + '">' +
             '<button type="submit" class="add-remove-button">' + addButton + '</button>' +
-            "</form>";
+            "</form>" +
+            route +
+            shipDetails;
 
         var popup = L.popup().setContent(popupContent);
         marker.bindPopup(popup).openPopup();
@@ -79,8 +85,6 @@
     }
 
 </script>
-</body>
-</html>
 
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
