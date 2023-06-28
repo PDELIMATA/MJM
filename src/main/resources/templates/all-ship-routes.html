@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>MJM My ships routes</title>
     <link rel="stylesheet"
           href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
@@ -24,7 +24,7 @@
 <div id="map"></div>
 <script th:inline="javascript">
 
-    var map = L.map('map').setView([51.505, -0.09], 10);
+    var map = L.map('map').setView([59.44, 10.66], 10);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -33,13 +33,18 @@
 
     var shipRoutes = [[${shipsWithRoutes}]];
 
+    var points = [];
+    var group = L.featureGroup();
+
     shipRoutes.forEach(shipRoute => {
         var shipMarker = L.marker(
             [shipRoute.ship.shipCoordinatesDTO.positionLong, shipRoute.ship.shipCoordinatesDTO.positionLat],
             {
                 title: shipRoute.ship.shipDTO.name + " " + shipRoute.ship.shipDTO.mmsi,
             }
-        ).addTo(map);
+        ).addTo(group);
+
+        points.push([shipRoute.ship.shipCoordinatesDTO.positionLong, shipRoute.ship.shipCoordinatesDTO.positionLat]);
 
         var shipDetails = '<button onclick="redirectToShipDetails(' + shipRoute.ship.shipDTO.id + ')">Details</button>';
 
@@ -62,6 +67,13 @@
 
         var routeLine = L.polyline(routeCoordinates, {color: 'red'}).addTo(map);
     });
+
+    group.addTo(map);
+
+    if (points.length > 0) {
+        var bounds = L.latLngBounds(points);
+        map.fitBounds(bounds);
+    }
 
     function redirectToShipDetails(shipId) {
         window.location.href = "/monitored-ships/ship/" + shipId;

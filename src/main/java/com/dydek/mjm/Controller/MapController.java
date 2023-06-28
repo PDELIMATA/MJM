@@ -26,48 +26,48 @@ public class MapController {
     }
 
     @GetMapping("/all")
-    String getAllShips(Model model, @AuthenticationPrincipal User authenticationUser) {
+    public String getAllShips(Model model, @AuthenticationPrincipal User authenticationUser) {
         model.addAttribute("tracks", trackService.getAllShips());
         model.addAttribute("userShips", shipService.getMmsiShipAddedToTS(authenticationUser.getUsername()));
         return "map";
     }
 
-    @GetMapping("route/{shipId}")
-    String getShipRoute(Model model, @PathVariable Long shipId) {
+    @GetMapping("/route/{shipId}")
+    public String getShipRoute(Model model, @PathVariable("shipId") Long shipId) {
         var ship = shipService.getShip(shipId);
         var route = shipCoordinatesService.getShipsCoordinates(shipId);
-        model.addAttribute("shipCoordinates", ship.getShipCoordinatesDTO());
-        model.addAttribute("ship", ship.getShipDTO());
-        model.addAttribute("shipRoute", new ShipWithRouteDTO(ship, route));
+        model.addAttribute("shipCoordinates", ship.getShipCoordinatesDTO())
+                .addAttribute("ship", ship.getShipDTO())
+                .addAttribute("shipRoute", new ShipWithRouteDTO(ship, route));
         return "route";
     }
 
-    @GetMapping("monitored-ships/routes")
-    String getTrackedShipsRoutes(Model model, @AuthenticationPrincipal User authenticationUser) {
+    @GetMapping("/monitored-ships/routes")
+    public String getTrackedShipsRoutes(Model model, @AuthenticationPrincipal User authenticationUser) {
         model.addAttribute("shipsWithRoutes", shipService.getUserShipsWithRoutes(authenticationUser.getUsername()));
         return "all-ship-routes";
     }
 
-    @GetMapping("monitored-ships/ship/{shipId}")
-    String getTrackedShipsList(Model model, @PathVariable Long shipId, @AuthenticationPrincipal User authenticationUser) {
+    @GetMapping("/monitored-ships/ship/{shipId}")
+    public String getTrackedShip(Model model, @PathVariable("shipId") Long shipId) {
         model.addAttribute("ship", shipService.getShip(shipId));
         return "ship";
     }
 
-    @GetMapping("monitored-ships/list")
-    String getTrackedShipsList(Model model, @AuthenticationPrincipal User authenticationUser) {
+    @GetMapping("/monitored-ships/list")
+    public String getTrackedShipsList(Model model, @AuthenticationPrincipal User authenticationUser) {
         model.addAttribute("ships", shipService.getUsersShips(authenticationUser.getUsername()));
         return "all-ship-list";
     }
 
-    @PostMapping("monitored-ships/{shipMMSI}")
-    String addShipToTrackingSystem(@PathVariable Integer shipMMSI, @AuthenticationPrincipal User authenticationUser) throws NameNotFoundException {
+    @PostMapping("/monitored-ships/{shipMMSI}")
+    public String addShipToTrackingSystem(@PathVariable("shipMMSI") Integer shipMMSI, @AuthenticationPrincipal User authenticationUser) throws NameNotFoundException {
         shipService.addShipToTrackingSystem(authenticationUser.getUsername(), shipMMSI);
         return "redirect:/all";
     }
 
-    @RequestMapping(value = "monitored-ships/{shipId}", method = RequestMethod.GET)
-    String removeShipFromTrackingSystem(@PathVariable Long shipId, @AuthenticationPrincipal User authenticationUser) {
+    @RequestMapping(value = "/monitored-ships/{shipId}", method = RequestMethod.GET)
+    public String removeShipFromTrackingSystem(@PathVariable("shipId") Long shipId, @AuthenticationPrincipal User authenticationUser) {
         shipService.removeShipFromTrackingSystem(authenticationUser.getUsername(), shipId);
         return "redirect:/all";
     }

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>MJM All ships map</title>
     <link rel="stylesheet"
           href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
@@ -23,7 +23,7 @@
 <body>
 <div id="map"></div>
 <script th:inline="javascript">
-    var map = L.map('map').setView([51.505, -0.09], 10);
+    var map = L.map('map').setView([59.44, 10.66], 10);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -32,6 +32,9 @@
 
     var tracks = [[${tracks}]];
     var userShips = [[${userShips}]];
+
+    var points = [];
+    var group = L.featureGroup();
 
     tracks.forEach(value => {
         var polygon;
@@ -45,7 +48,9 @@
             '<button onclick="redirectToShipDetails(' + getId(value) + ')">Details</button>' : "";
         var marker = L.marker([value.x, value.y], {
             title: value.name + " " + value.mmsi,
-        }).addTo(map);
+        }).addTo(group);
+
+        points.push([value.x, value.y]);
 
         var popupContent =
             value.name + " mmsi: " + value.mmsi +
@@ -73,6 +78,13 @@
         marker.on('mouseout', () => {
             map.removeLayer(polygon);
         });
+
+        group.addTo(map);
+
+        if (points.length > 0) {
+            var bounds = L.latLngBounds(points);
+            map.fitBounds(bounds);
+        }
     });
 
     function isShipInUserShips(ship) {

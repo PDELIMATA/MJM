@@ -1,20 +1,26 @@
 package com.dydek.mjm.Service.ApiService;
 
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
 
 @Service
 public class ApiServiceImpl implements ApiService {
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final WebClient webClient;
     private volatile String accessToken;
 
     public ApiServiceImpl() {
+        this.webClient = WebClient.builder()
+                .baseUrl("https://id.barentswatch.no/connect/token")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .build();
         generateAuthToken();
     }
 
@@ -23,14 +29,11 @@ public class ApiServiceImpl implements ApiService {
         try {
             this.accessToken = requestAuthToken();
         } catch (Exception ex) {
-
+            ex.printStackTrace();
         }
     }
 
     private String requestAuthToken() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         String apiClientId = "delimata.ps@gmail.com:dydek";
         body.add("client_id", apiClientId);
@@ -39,22 +42,18 @@ public class ApiServiceImpl implements ApiService {
         body.add("client_secret", apiSecret);
         body.add("grant_type", "client_credentials");
 
-        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, headers);
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "https://id.barentswatch.no/connect/token",
-                HttpMethod.POST,
-                entity,
-                Map.class
-        );
-        Map responseBody = response.getBody();
-        if (responseBody == null) {
-            throw new IllegalStateException("Empty response body");
-        }
-        Object token = responseBody.get("access_token");
-        if (token == null) {
-            throw new IllegalStateException("Access token not found");
-        }
-        return (String) token;
+        return webClient.post()
+                .body(BodyInserters.fromFormData(body))
+                .retrieve()
+                .bodyToMono(Map.class)
+                .map(responseBody -> {
+                    Object token = responseBody.get("access_token");
+                    if (token == null) {
+                        throw new IllegalStateException("Access token not found");
+                    }
+                    return (String) token;
+                })
+                .block();
     }
 
     public String getToken() {

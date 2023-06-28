@@ -6,19 +6,17 @@ import com.dydek.mjm.Model.Ship;
 import com.dydek.mjm.Model.Track;
 import com.dydek.mjm.Service.ApiService.ApiService;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 
 @Service
 public class TrackServiceImpl implements TrackService {
-    RestTemplate restTemplate = new RestTemplate();
+    private final WebClient webClient;
     private final ApiService apiService;
     private final ShipCoordinatesService shipCoordinatesService;
     private List<Ship> shipsOnRadar = new ArrayList<>();
@@ -26,48 +24,44 @@ public class TrackServiceImpl implements TrackService {
     public TrackServiceImpl(ApiService apiService, ShipCoordinatesService shipCoordinatesService) {
         this.apiService = apiService;
         this.shipCoordinatesService = shipCoordinatesService;
+        this.webClient = WebClient.builder().build();
     }
 
     @Override
     public List<Ship> getTracks() {
-
         HttpHeaders httpHeaders = new HttpHeaders();
         String token = apiService.getToken();
-        httpHeaders.add("Authorization", "Bearer " + token);
-        HttpEntity<Void> httpEntity = new HttpEntity<>(httpHeaders);
-        ResponseEntity<Track[]> exchange = restTemplate.exchange(
-                "https://live.ais.barentswatch.no/live/v1/latest/combined?modelType=Full&modelFormat=Json",
-                HttpMethod.GET,
-                httpEntity,
-                Track[].class
+        httpHeaders.setBearerAuth(token);
+
+        return webClient.get()
+                .uri("https://live.ais.barentswatch.no/live/v1/latest/combined?modelType=Full&modelFormat=Json")
+                .headers(headers -> headers.addAll(httpHeaders))
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToFlux(Track.class)
+                .take(100)
+                .map(this::mapToShip)
+                .collectList()
+                .block();
+    }
+
+    private Ship mapToShip(Track track) {
+        if (track.getName() == null) {
+            track.setName("UNKNOWN");
+        }
+        if (track.getDestination() == null) {
+            track.setDestination("UNKNOWN");
+        }
+        return new Ship(
+                track.getLatitude(),
+                track.getLongitude(),
+                track.getName(),
+                track.getMmsi(),
+                track.getShipType(),
+                getLat(track),
+                getLong(track),
+                new Date()
         );
-
-        //TODO: fix filtering for area
-        Track[] tracks = Arrays.stream(Objects.requireNonNull(exchange.getBody()))
-                .map(track -> {
-                    if (track.getName() == null) {
-                        track.setName("UNKNOWN");
-                    }
-                    if (track.getDestination() == null) {
-                        track.setDestination("UNKNOWN");
-                    }
-                    return track;
-                })
-                .limit(50)
-                .toArray(Track[]::new);
-
-        return this.shipsOnRadar = Arrays.stream(tracks)
-                .map(track -> new Ship(
-                        track.getLatitude(),
-                        track.getLongitude(),
-                        track.getName(),
-                        track.getMmsi(),
-                        track.getShipType(),
-                        getLat(track),
-                        getLong(track),
-                        new Date()
-                ))
-                .toList();
     }
 
     @Override
@@ -103,9 +97,17 @@ public class TrackServiceImpl implements TrackService {
     public Datum getDestination(String destinationName, double Lat, double Long) {
         try {
             String url = "http://api.positionstack.com/v1/forward?access_key=ecc21c99187c197c45144b0a89cd6648&query=" + destinationName;
-            JsonNode data = Objects.requireNonNull(restTemplate.getForObject(url, JsonNode.class)).get("data").get(0);
-            double latitude = Optional.of(data.get("latitude").asDouble()).orElse(Lat);
-            double longitude = Optional.of(data.get("longitude").asDouble()).orElse(Long);
+            JsonNode data = Objects.requireNonNull(webClient.get().uri(url).retrieve().bodyToMono(JsonNode.class).block())
+                    .get("data")
+                    .get(0);
+
+            double latitude = Optional.ofNullable(data.get("latitude"))
+                    .map(JsonNode::asDouble)
+                    .orElse(Lat);
+            double longitude = Optional.ofNullable(data.get("longitude"))
+                    .map(JsonNode::asDouble)
+                    .orElse(Long);
+
             return new Datum(latitude, longitude);
         } catch (Exception ex) {
             return new Datum(Lat, Long);

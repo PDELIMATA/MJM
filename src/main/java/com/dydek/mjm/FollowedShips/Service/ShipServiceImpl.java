@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import javax.naming.NameNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ShipServiceImpl implements ShipService {
@@ -44,54 +43,53 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     public List<Ship> getUsersShips(String username) {
-        return shipRepository.findShipsByUser(userRepository.findByUsername(username).orElse(new User())).stream().toList();
+        User user = userRepository.findByUsername(username).orElseThrow(EntityNotFoundException::new);
+        return shipRepository.findShipsByUser(user);
     }
 
     @Override
+    @Transactional
     public List<ShipWithRouteDTO> getUserShipsWithRoutes(String username) {
-        List<ShipWithRouteDTO> userShipsWithRout = new ArrayList<>();
+        List<ShipWithRouteDTO> userShipsWithRoute = new ArrayList<>();
         getUsersShips(username).forEach(ship -> {
             var userShip = this.getShip(ship.getId());
             var route = shipCoordinatesService.getShipsCoordinates(ship.getId());
-            userShipsWithRout.add(new ShipWithRouteDTO(userShip, route));
+            userShipsWithRoute.add(new ShipWithRouteDTO(userShip, route));
         });
-        return userShipsWithRout;
+        return userShipsWithRoute;
     }
 
     @Override
     public List<ShipDTO> getMmsiShipAddedToTS(String username) {
-        return getUsersShips(username).stream().map(ship -> modelMapper.map(ship, ShipDTO.class)).toList();
+        return getUsersShips(username).stream()
+                .map(ship -> modelMapper.map(ship, ShipDTO.class))
+                .toList();
     }
 
     @Override
     public ShipWithCoordinatesDTO getShip(Long id) {
-
-        ShipDTO shipDTO = modelMapper.map(shipRepository.findById(id).orElse(new Ship()), ShipDTO.class);
+        Ship ship = shipRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        ShipDTO shipDTO = modelMapper.map(ship, ShipDTO.class);
         ShipCoordinatesDTO shipCoordinatesDTO = modelMapper.map(shipCoordinatesRepository.findById(id).orElse(new ShipCoordinates()), ShipCoordinatesDTO.class);
         return new ShipWithCoordinatesDTO(shipDTO, shipCoordinatesDTO);
-
     }
 
     @Override
     @Transactional
     public void addShipToTrackingSystem(String username, Integer mmsi) throws NameNotFoundException, EntityExistsException {
+        User user = userRepository.findByUsername(username).orElseThrow(EntityNotFoundException::new);
 
-        var userEntity = userRepository.findByUsername(username)
-                .orElseThrow(EntityNotFoundException::new);
-
-        Ship existingShip = shipRepository.findShipByUserAndMmsi(userEntity, mmsi);
-
-        Optional.ofNullable(existingShip)
-                .ifPresent(ship -> {
-                    throw new EntityExistsException();
-                });
+        Ship existingShip = shipRepository.findShipByUserAndMmsi(user, mmsi);
+        if (existingShip != null) {
+            throw new EntityExistsException("Ship already exists for the user.");
+        }
 
         com.dydek.mjm.Model.Ship serviceShip = trackService.getShip(mmsi);
+        if (serviceShip == null) {
+            throw new NameNotFoundException("There is no Ship with this MMSI");
+        }
 
-        Optional.ofNullable(serviceShip)
-                .orElseThrow(() -> new NameNotFoundException("There is no Ship with this MMSI"));
-
-        Ship ship = new Ship(mmsi, serviceShip.getShipType(), serviceShip.getName(), userEntity, true);
+        Ship ship = new Ship(mmsi, serviceShip.getShipType(), serviceShip.getName(), user, true);
         shipRepository.save(ship);
 
         ShipCoordinates shipCoordinates = new ShipCoordinates(
@@ -106,9 +104,9 @@ public class ShipServiceImpl implements ShipService {
     @Override
     @Transactional
     public void removeShipFromTrackingSystem(String username, Long shipId) {
-        var ship = shipRepository.findById(shipId).orElseThrow();
+        Ship ship = shipRepository.findById(shipId).orElseThrow(EntityNotFoundException::new);
         if (!ship.getUser().getUsername().equals(username)) {
-            throw new AuthorizationServiceException("");
+            throw new AuthorizationServiceException("User is not authorized to remove this ship.");
         }
         shipRepository.delete(ship);
     }
